@@ -38,7 +38,6 @@ typedef struct {
   char* input;
 
   char* input_start;
-  char* input_end;
 
   LZ77e_outputs output; 
   LZ77e_window window;
@@ -46,13 +45,68 @@ typedef struct {
 } LZ77_encoder;
 
 static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder);
+static inline int get_first_sb_cp(LZ77_encoder* encoder, char* cp); 
+static inline int get_last_la_cp(char *cp);
+
+static inline int get_last_la_cp(char *cp) 
+{
+  int inc = 0;
+  char* m = cp;
+  while(*m != '\0') {
+    inc++;
+    m++; 
+  }
+
+  return inc;
+}
+
+static inline int get_first_sb_cp(LZ77_encoder* encoder, char* cp) 
+{
+  int dec = 0;
+  char* l = cp;
+  while(l > encoder->input_start && dec < encoder->window.sbl) {
+    l--;
+    dec++;
+  }
+  
+  return dec;
+}
 
 static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder) 
 {
   char *cp = encoder->input;
 
   while(*cp != '\0') {
-    
+    int w_sb_max_size  = get_first_sb_cp(encoder, cp);
+    int w_la_max_size = get_last_la_cp(cp);
+
+    char* first = cp - w_sb_max_size;
+    char* last = cp + w_la_max_size;
+    char* lookahead = cp;
+
+    int B = w_sb_max_size, L = 0;
+    int max_L = 0;
+
+    while(first != cp) {
+      while(*lookahead == *first && first != cp && lookahead < last) {
+        L++;
+        lookahead++;
+        first++; 
+      }
+      max_L = L > max_L ? L : max_L;
+      if(first != cp && lookahead < last) {
+        B -= L == 0 ? 1 : L;   
+        lookahead -= L;
+        first += L == 0 ? 1 : 0;
+        L = 0;
+      }
+    }
+
+      if(*lookahead == '\n')
+        *lookahead = '-';
+      LZ77e_output el = (LZ77e_output) {.B = B, .L = max_L, .C = *lookahead};
+      cp += max_L + 1;
+      da_append(&(encoder->output), el);
   }
   
   return &(encoder->output);

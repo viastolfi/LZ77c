@@ -8,7 +8,7 @@ OBJ = \
 	$(BUILD)/main.o \
 
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
+CFLAGS = -g -Wall -Wextra -std=c99
 
 .PHONY: all clean
 
