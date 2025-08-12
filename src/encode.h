@@ -102,29 +102,40 @@ static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder)
 
     char* first = cp - w_sb_max_size;
     char* last = cp + w_la_max_size;
-    char* lookahead = cp;
 
-    int B = w_sb_max_size, L = 0;
-    int max_L, max_B = 0;
+    int max_L = 0, max_B = 0;
 
     while(first != cp) {
-      while(*lookahead == *first && first != cp && lookahead <= last) {
+      char* lookahead = cp;
+      int L = 0;
+      char* f = first;
+
+      while(*lookahead == *f && f != cp && lookahead <= last) {
         L++;
         lookahead++;
-        first++; 
+        f++; 
       }
-      max_B = L > max_L ? B : max_B;
-      max_L = L > max_L ? L : max_L;
-      if(first != cp && lookahead < last) {
-        B -= L == 0 ? 1 : L;   
-        lookahead -= L;
-        first += L == 0 ? 1 : 0;
-        L = 0;
+
+      if (L > max_L) {
+        max_L = L;
+        max_B = cp - first;
       }
+
+      first++; 
     }
 
-    LZ77e_output el = (LZ77e_output) {.B = max_B, .L = max_L, .C = *lookahead};
-    cp += max_L + 1;
+    LZ77e_output el;
+    if (max_L == 0) {
+      el.B = 0;
+      el.L = 0;
+      el.C = *cp;
+    } else {
+      el.B = max_B;
+      el.L = max_L;
+      el.C = *(cp + max_L);
+    }
+
+    cp += (max_L > 0 ? max_L + 1 : 1);
     da_append(&(encoder->output), el);
   }
   
