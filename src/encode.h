@@ -51,10 +51,18 @@ static inline int get_last_la_cp(LZ77_encoder* encoder, char *cp);
 
 static inline int LZ77e_write_outputs(LZ77_encoder* encoder) 
 {
-  da_foreach(LZ77e_output, it, &(encoder->output)) {
-    printf("(%d,%d)%c\n", it->B, it->L, it->C);
+  FILE* f;
+  f = fopen("sample.lz77", "w");
+  if(f == NULL) {
+    puts("[ERROR] - can't open .lz77 file");
+    return 1;
   }
 
+  da_foreach(LZ77e_output, it, &(encoder->output)) {
+    fprintf(f, "(%d,%d)%c\n", it->B, it->L, it->C);
+  }
+
+  fclose(f);
   return 0;
 }
 

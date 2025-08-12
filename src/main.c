@@ -51,7 +51,7 @@ int main(int argc, char** argv)
   LZ77_encoder encoder;
   encoder.input = content;
   encoder.input_start = content;
-  encoder.window = (LZ77e_window) {.sbl = 5, .labl = 5};
+  encoder.window = (LZ77e_window) {.sbl = strlen(content), .labl = strlen(content) };
 
   encoder.output.items = NULL;
   encoder.output.count = 0;
