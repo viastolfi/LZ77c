@@ -123,8 +123,6 @@ static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder)
       }
     }
 
-    if(*lookahead == '\0')
-      *lookahead = '-';
     LZ77e_output el = (LZ77e_output) {.B = max_B, .L = max_L, .C = *lookahead};
     cp += max_L + 1;
     da_append(&(encoder->output), el);
