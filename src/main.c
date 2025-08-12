@@ -7,6 +7,11 @@ char* test_string = "aabcabcc";
 
 int main(int argc, char** argv)
 {
+  if(argc < 2) {
+    puts("[ERROR] - please give a file to compress");
+    return 1;
+  }
+
   LZ77_encoder encoder;
   encoder.input = test_string;
   encoder.input_start = test_string;
@@ -17,5 +22,7 @@ int main(int argc, char** argv)
   encoder.output.capacity = 0;
 
   LZ77_encode(&encoder);
+  LZ77e_write_outputs(&encoder);
+
   return 0;
 }

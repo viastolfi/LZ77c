@@ -45,17 +45,29 @@ typedef struct {
 } LZ77_encoder;
 
 static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder);
+static inline int LZ77e_write_outputs(LZ77_encoder* encoder);
 static inline int get_first_sb_cp(LZ77_encoder* encoder, char* cp); 
-static inline int get_last_la_cp(char *cp);
+static inline int get_last_la_cp(LZ77_encoder* encoder, char *cp);
 
-static inline int get_last_la_cp(char *cp) 
+static inline int LZ77e_write_outputs(LZ77_encoder* encoder) 
+{
+  da_foreach(LZ77e_output, it, &(encoder->output)) {
+    printf("(%d,%d)%c\n", it->B, it->L, it->C);
+  }
+
+  return 0;
+}
+
+static inline int get_last_la_cp(LZ77_encoder* encoder, char *cp) 
 {
   int inc = 0;
   char* m = cp;
-  while(*m != '\0') {
+  while(*m != '\0' && inc < encoder->window.labl) {
     inc++;
     m++; 
   }
+  
+  inc++;
 
   return inc;
 }
@@ -78,7 +90,7 @@ static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder)
 
   while(*cp != '\0') {
     int w_sb_max_size  = get_first_sb_cp(encoder, cp);
-    int w_la_max_size = get_last_la_cp(cp);
+    int w_la_max_size = get_last_la_cp(encoder, cp);
 
     char* first = cp - w_sb_max_size;
     char* last = cp + w_la_max_size;
@@ -88,7 +100,7 @@ static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder)
     int max_L = 0;
 
     while(first != cp) {
-      while(*lookahead == *first && first != cp && lookahead < last) {
+      while(*lookahead == *first && first != cp && lookahead <= last) {
         L++;
         lookahead++;
         first++; 
@@ -102,11 +114,11 @@ static inline LZ77e_outputs* LZ77_encode(LZ77_encoder* encoder)
       }
     }
 
-      if(*lookahead == '\0')
-        *lookahead = '-';
-      LZ77e_output el = (LZ77e_output) {.B = B, .L = max_L, .C = *lookahead};
-      cp += max_L + 1;
-      da_append(&(encoder->output), el);
+    if(*lookahead == '\0')
+      *lookahead = '-';
+    LZ77e_output el = (LZ77e_output) {.B = B, .L = max_L, .C = *lookahead};
+    cp += max_L + 1;
+    da_append(&(encoder->output), el);
   }
   
   return &(encoder->output);
